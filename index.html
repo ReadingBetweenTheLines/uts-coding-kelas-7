@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTS Coding Kelas 7!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="form-container">
+        
+        <div id="screen-login" class="screen active">
+            <h1>🚀 UTS Coding Kelas 7</h1>
+            <p>Selamat datang! Silakan masukkan namamu untuk memulai ujian.</p>
+            <input type="text" id="student-name" placeholder="Tulis namamu di sini..." autocomplete="off">
+            <button onclick="quizApp.startQuiz()">Mulai Ujian 🎮</button>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <h2>📝 Selamat mengerjakan, <span id="display-name" class="highlight"></span>!</h2>
+            <div id="questions-container">
+                </div>
+            <button class="submit-btn" onclick="quizApp.submitQuiz()">Kumpulkan Jawaban 📤</button>
+        </div>
+
+        <div id="screen-final" class="screen">
+            <h2>🎉 Selesai!</h2>
+            <p>Kerja bagus! Silakan salin (copy) teks hasil di bawah ini dan serahkan ke gurumu untuk menyelesaikan UTS.</p>
+            <textarea id="final-log" readonly></textarea>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

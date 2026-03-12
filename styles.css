@@ -1,0 +1,231 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+    --bg-color: #f0f8ff;
+    --card-bg: #ffffff;
+    --primary: #4e89ae;
+    --secondary: #ed6663;
+    --text-main: #43658b;
+    --border-color: #e0e0e0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Nunito', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Allows scrolling */
+    min-height: 100vh;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 700px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 40px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+h1, h2 {
+    color: var(--primary);
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.highlight { color: var(--secondary); font-weight: 800; }
+
+.question-card {
+    background: #f9f9f9;
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.question-card h3 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+/* Inputs and Buttons */
+input[type="text"], textarea {
+    width: 100%;
+    background: #fff;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-main);
+    padding: 15px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: bold;
+    box-sizing: border-box;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+input[type="text"]:focus { outline: none; border-color: var(--primary); }
+textarea { height: 200px; resize: none; font-size: 0.9rem; }
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 2px solid var(--border-color);
+    padding: 12px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.radio-label:hover { border-color: var(--primary); background: #f0f8ff; }
+.radio-label input { margin-right: 15px; transform: scale(1.2); }
+
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: inherit;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+    box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+}
+
+button:hover { transform: translateY(-2px); box-shadow: 0 6px 0px rgba(0,0,0,0.15); filter: brightness(1.1); }
+button:active { transform: translateY(2px); box-shadow: 0 0px 0px rgba(0,0,0,0.1); }
+button.submit-btn { background: var(--secondary); margin-top: 20px; }
+
+/* --- NEW DRAG AND DROP BLOCK STYLES --- */
+.block-container {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end; /* Keeps blocks anchored to the bottom */
+    margin: 20px 0;
+    height: 160px; /* Gives enough room for the tallest block */
+    border-bottom: 4px solid var(--border-color); /* The "floor" */
+    padding-bottom: 10px;
+}
+
+.sort-block {
+    width: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    cursor: grab;
+    padding-bottom: 10px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.sort-block:active {
+    cursor: grabbing;
+    transform: scale(1.05); /* Slight pop effect when grabbed */
+}
+
+.sort-block.drag-over {
+    background: var(--secondary); /* Turns red when hovered over with another block */
+}
+
+/* --- UPDATE STYLE BALOK UNTUK 11 BALOK --- */
+.block-container {
+    display: flex;
+    gap: 6px; /* Jarak dirapatkan sedikit */
+    justify-content: center;
+    align-items: flex-end;
+    margin: 20px 0;
+    height: 180px; /* Ditinggikan sedikit agar balok angka 90+ tidak terpotong */
+    border-bottom: 4px solid var(--border-color);
+    padding-bottom: 10px;
+    overflow-x: auto; /* Mencegah terpotong di layar HP kecil */
+}
+
+.sort-block {
+    width: 40px; /* Lebar dikecilkan sedikit agar muat 11 balok */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    font-size: 1rem; /* Ukuran font disesuaikan */
+    font-weight: bold;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    cursor: grab;
+    padding-bottom: 8px;
+    transition: background 0.2s, transform 0.2s; /* Hanya untuk warna dan efek klik */
+}
+
+.sort-block:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.sort-block.drag-over {
+    background: var(--secondary);
+}
+
+/* --- KEAJAIBAN ANIMASI MULUS (VIEW TRANSITIONS) --- */
+::view-transition-group(*) {
+    animation-duration: 0.4s; /* Kecepatan balok meluncur */
+    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1); /* Gerakan mulus seperti pegas */
+}
+
+/* --- UPDATE UNTUK SMARTPHONE (SISTEM KETUK) --- */
+.sort-block {
+    width: 35px; /* Dikecilkan sedikit agar 11 balok muat di layar HP */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    font-size: 0.9rem; /* Font dikecilkan sedikit */
+    font-weight: bold;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer; /* Ubah kursor jadi mode klik/sentuh */
+    padding-bottom: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Efek saat balok diketuk pertama kali (dipegang) */
+.sort-block.selected {
+    background: var(--accent);
+    transform: translateY(-15px); /* Balok melayang naik */
+    box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+}
+
+::view-transition-group(*) {
+    animation-duration: 0.4s;
+    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+}
