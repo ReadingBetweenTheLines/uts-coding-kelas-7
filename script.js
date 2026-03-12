@@ -191,8 +191,14 @@ const quizApp = {
     async submitQuiz() {
         if(!confirm("Apakah kamu yakin sudah selesai dan ingin mengumpulkan jawaban?")) return;
 
-        // Kumpulkan data ke dalam satu teks panjang
-        let logOutput = `== HASIL UJIAN UTS ==\nSiswa: ${this.studentName}\nMulasi: ${this.startTime.toLocaleTimeString('id-ID')}\nSelesai: ${new Date().toLocaleTimeString('id-ID')}\n-----------------------\n`;
+        // Kumpulkan data ke dalam objek yang rapi (bukan teks panjang lagi)
+        let answersPayload = {
+            nama: this.studentName,
+            mulai: this.startTime.toLocaleTimeString('id-ID'),
+            selesai: new Date().toLocaleTimeString('id-ID')
+        };
+
+        let logOutput = `== HASIL UJIAN UTS ==\nSiswa: ${this.studentName}\n-----------------------\n`;
 
         this.questions.forEach((q, index) => {
             let answer = "Belum dijawab";
@@ -200,11 +206,15 @@ const quizApp = {
                 const inputVal = document.getElementById(q.id).value.trim();
                 if (inputVal) answer = inputVal;
             } else if (q.type === "sort-blocks") {
-                answer = `Susunan Akhir (${q.sortType}): [${this.sortArrays[q.id].join(", ")}]`;
+                answer = `[${this.sortArrays[q.id].join(", ")}]`;
             } else if (q.type === "guess-game") {
                 const game = this.guessGames[q.id];
                 answer = `[${game.solved ? "DITEMUKAN" : "MENYERAH"}] Target: ${game.target} | Tebakan: [${game.guesses.join(", ")}]`;
             }
+            
+            // Simpan jawaban spesifik ke q1, q2, q3... untuk dikirim ke Spreadsheet
+            answersPayload[`q${index + 1}`] = answer; 
+            
             logOutput += `Q${index + 1}: ${answer}\n`;
         });
 
@@ -213,23 +223,21 @@ const quizApp = {
         document.getElementById('screen-final').classList.add('active');
 
         // ==========================================
-        // FITUR PENGIRIMAN OTOMATIS KE FORMSPREE
+        // FITUR PENGIRIMAN KE GOOGLE SHEETS
         // ==========================================
-        // Ganti URL di bawah ini dengan URL Formspree milikmu sendiri nanti
-        const formspreeURL = "https://formspree.io/f/meerkkra"; 
+        // GANTI tulisan di bawah dengan URL Web App dari Google Apps Script-mu!
+        const googleScriptURL = "https://script.google.com/macros/s/AKfycbyYC4Jf716o_ii0_eQL-Ka2IcxHZZw87MThHpEtJYnKJXyJ6CFf8RA_HhveZa8IbYFG5w/exec"; 
 
         try {
-            await fetch(formspreeURL, {
+            await fetch(googleScriptURL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    NamaSiswa: this.studentName,
-                    Pesan: logOutput // Mengirim log lengkap ke tabelmu
-                })
+                // Menggunakan text/plain agar tidak diblokir oleh keamanan browser (CORS)
+                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                body: JSON.stringify(answersPayload)
             });
-            alert("Jawaban berhasil terkirim ke server Bapak Guru! Silakan tutup halaman ini.");
+            alert("Jawaban berhasil tersimpan ke sistem Bapak Guru! Silakan tutup halaman ini.");
         } catch (error) {
-            alert("Gagal mengirim otomatis karena koneksi. Silakan copy teks hasil dan kirim secara manual ke Bapak Guru.");
+            alert("Gagal mengirim otomatis karena koneksi. Silakan copy teks hasil dan kirim secara manual.");
         }
     }
 };
