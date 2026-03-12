@@ -36,7 +36,13 @@ const quizApp = {
 
     startQuiz() {
         const nameInput = document.getElementById('student-name').value.trim();
-        if (!nameInput) return alert("Tolong masukkan namamu dulu untuk memulai! 😊");
+        const classInput = document.getElementById('student-class').value.trim(); // Tangkap data kelas
+        
+        // Peringatan jika ada yang kosong
+        if (!nameInput || !classInput) {
+            alert("Tolong isi Nama dan Kelasmu dulu ya! 😊");
+            return;
+        }
 
         // Kunci Anti-Refresh
         if (localStorage.getItem('uts_coding_started') === 'true') {
@@ -46,8 +52,11 @@ const quizApp = {
         localStorage.setItem('uts_coding_started', 'true');
 
         this.studentName = nameInput;
+        this.studentClass = classInput; // Simpan ke memori aplikasi
         this.startTime = new Date();
-        document.getElementById('display-name').textContent = this.studentName;
+        
+        // Tampilkan Nama dan Kelas di layar ujian
+        document.getElementById('display-name').textContent = `${this.studentName} (${this.studentClass})`;
         
         this.renderQuestions();
         document.getElementById('screen-login').classList.remove('active');
@@ -194,6 +203,7 @@ const quizApp = {
         // Kumpulkan data ke dalam objek yang rapi (bukan teks panjang lagi)
         let answersPayload = {
             nama: this.studentName,
+            kelas: this.studentClass,
             mulai: this.startTime.toLocaleTimeString('id-ID'),
             selesai: new Date().toLocaleTimeString('id-ID')
         };
@@ -226,7 +236,7 @@ const quizApp = {
         // FITUR PENGIRIMAN KE GOOGLE SHEETS
         // ==========================================
         // GANTI tulisan di bawah dengan URL Web App dari Google Apps Script-mu!
-        const googleScriptURL = "https://script.google.com/macros/s/AKfycbyYC4Jf716o_ii0_eQL-Ka2IcxHZZw87MThHpEtJYnKJXyJ6CFf8RA_HhveZa8IbYFG5w/exec"; 
+        const googleScriptURL = "https://script.google.com/macros/s/AKfycbwNFCL_E_lY752dEEpFxqKDnn3U62Ey8GRNp3LyCqk1QF0CZ8XX-L2JPPWuUqC9PLMt3g/exec"; 
 
         try {
             await fetch(googleScriptURL, {
