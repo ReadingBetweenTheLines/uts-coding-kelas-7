@@ -1,9 +1,10 @@
 const quizApp = {
     studentName: "",
+    studentClass: "",
     startTime: null,
     sortArrays: {}, 
     guessGames: {}, 
-    selectedBlock: null, // BARU: Untuk mengingat balok mana yang sedang diketuk/dipegang
+    selectedBlock: null, 
     
     questions: [
         { id: "q1", type: "text", topic: "💡 Angka Biner", text: "Jika nilai tempatnya adalah 8, 4, 2, 1, angka berapakah kode biner '1010' di dunia nyata?" },
@@ -17,7 +18,7 @@ const quizApp = {
             initialArray: [45, 12, 89, 33, 17, 56, 7, 68, 22, 91, 5] 
         },
         
-        { id: "q6", type: "text", topic: "🧱 Insertion Sort", text: "Istilah lain dari mengambil satu balok dan menaruhnya di sela-sela yang pas adalah m_ _ _ _ _ _ _ _ _ _ (Isi kata yang hilang!)" },
+        { id: "q6", type: "text", topic: "🧱 Insertion Sort", text: "Apa pengertian dari Insertion Sort?" },
         
         {
             id: "q7", type: "sort-blocks", sortType: "insertion", topic: "🧱 Praktik Insertion Sort",
@@ -34,31 +35,84 @@ const quizApp = {
         }
     ],
 
+    // --- NEW: THE AUTO-SAVE SYSTEM ---
+    saveState() {
+        let state = {
+            name: this.studentName,
+            kelas: this.studentClass,
+            startTime: this.startTime,
+            sortArrays: this.sortArrays,
+            guessGames: this.guessGames,
+            textAnswers: {}
+        };
+        
+        // Grab current text from all input boxes
+        this.questions.forEach(q => {
+            if (q.type === "text") {
+                const el = document.getElementById(q.id);
+                if (el) state.textAnswers[q.id] = el.value;
+            }
+        });
+        
+        localStorage.setItem('uts_state', JSON.stringify(state));
+    },
+
+    checkSavedState() {
+        // Check if they already fully completed and submitted it
+        if (localStorage.getItem('uts_submitted') === 'true') {
+            document.getElementById('screen-login').innerHTML = `
+                <h1 style="color: var(--secondary);">⛔ Ujian Selesai</h1>
+                <p>Kamu sudah mengumpulkan jawaban ujian ini. Terima kasih!</p>
+            `;
+            return;
+        }
+
+        // Check if they have an active, unfinished session
+        const saved = localStorage.getItem('uts_state');
+        if (saved) {
+            const state = JSON.parse(saved);
+            this.studentName = state.name;
+            this.studentClass = state.kelas;
+            this.startTime = new Date(state.startTime); // Convert back to Date object
+            this.sortArrays = state.sortArrays || {};
+            this.guessGames = state.guessGames || {};
+            
+            document.getElementById('display-name').textContent = `${this.studentName} (${this.studentClass})`;
+            
+            this.renderQuestions();
+            
+            // Restore text box answers
+            this.questions.forEach(q => {
+                if (q.type === 'text' && state.textAnswers && state.textAnswers[q.id]) {
+                    document.getElementById(q.id).value = state.textAnswers[q.id];
+                }
+            });
+
+            // Skip login screen
+            document.getElementById('screen-login').classList.remove('active');
+            document.getElementById('screen-quiz').classList.add('active');
+        }
+    },
+    // ---------------------------------
+
     startQuiz() {
         const nameInput = document.getElementById('student-name').value.trim();
-        const classInput = document.getElementById('student-class').value.trim(); // Tangkap data kelas
+        const classInput = document.getElementById('student-class').value.trim(); 
         
-        // Peringatan jika ada yang kosong
         if (!nameInput || !classInput) {
             alert("Tolong isi Nama dan Kelasmu dulu ya! 😊");
             return;
         }
 
-        // Kunci Anti-Refresh
-        if (localStorage.getItem('uts_coding_started') === 'true') {
-            alert("Akses ditolak! Kamu sudah pernah mencoba masuk ke ujian ini.");
-            return;
-        }
-        localStorage.setItem('uts_coding_started', 'true');
-
         this.studentName = nameInput;
-        this.studentClass = classInput; // Simpan ke memori aplikasi
+        this.studentClass = classInput; 
         this.startTime = new Date();
         
-        // Tampilkan Nama dan Kelas di layar ujian
         document.getElementById('display-name').textContent = `${this.studentName} (${this.studentClass})`;
         
         this.renderQuestions();
+        this.saveState(); // Save immediately upon starting
+        
         document.getElementById('screen-login').classList.remove('active');
         document.getElementById('screen-quiz').classList.add('active');
     },
@@ -73,8 +127,9 @@ const quizApp = {
             
             let html = `<h3>${index + 1}. ${q.topic}</h3><p>${q.text}</p>`;
 
+            // Added oninput="quizApp.saveState()" so it saves every time they type a letter
             if (q.type === "text") {
-                html += `<input type="text" id="${q.id}" placeholder="Ketik jawabanmu di sini...">`;
+                html += `<input type="text" id="${q.id}" placeholder="Ketik jawabanmu di sini..." oninput="quizApp.saveState()">`;
             } else if (q.type === "sort-blocks") {
                 html += `<div class="block-container" id="container-${q.id}"></div>`;
             } else if (q.type === "guess-game") {
@@ -87,10 +142,7 @@ const quizApp = {
                     <p style="font-size: 0.9em; color: #666;">Riwayat tebakanmu: <span id="history-${q.id}">-</span></p>
                 `;
                 if (!this.guessGames[q.id]) {
-                    this.guessGames[q.id] = {
-                        target: Math.floor(Math.random() * 100) + 1,
-                        guesses: [], solved: false
-                    };
+                    this.guessGames[q.id] = { target: Math.floor(Math.random() * 100) + 1, guesses: [], solved: false };
                 }
             }
 
@@ -100,6 +152,22 @@ const quizApp = {
             if (q.type === "sort-blocks") {
                 if (!this.sortArrays[q.id]) this.sortArrays[q.id] = [...q.initialArray]; 
                 this.renderBlocks(q);
+            }
+
+            // Restore Guess Game UI if it was loaded from Auto-Save
+            if (q.type === "guess-game") {
+                const game = this.guessGames[q.id];
+                if (game.guesses.length > 0) {
+                    document.getElementById(`history-${q.id}`).textContent = game.guesses.join(" ➔ ");
+                    if (game.solved) {
+                        document.getElementById(`feedback-${q.id}`).textContent = `🎉 TEPAT SEKALI! Angka rahasianya adalah ${game.target}!`;
+                        document.getElementById(`feedback-${q.id}`).style.color = "green";
+                        document.getElementById(`input-${q.id}`).disabled = true;
+                    } else {
+                        const lastGuess = game.guesses[game.guesses.length - 1];
+                        document.getElementById(`feedback-${q.id}`).textContent = lastGuess < game.target ? `🔼 Lebih BESAR dari ${lastGuess}` : `🔽 Lebih KECIL dari ${lastGuess}`;
+                    }
+                }
             }
         });
     },
@@ -131,9 +199,10 @@ const quizApp = {
             feedbackEl.textContent = `🔽 Angka rahasia LEBIH KECIL dari ${guess}`;
             feedbackEl.style.color = "var(--secondary)";
         }
+        
+        this.saveState(); // Auto-save after every guess
     },
 
-    // --- LOGIKA KETUK (TAP) UNTUK SMARTPHONE ---
     renderBlocks(q) {
         const qId = q.id;
         const blockContainer = document.getElementById(`container-${qId}`);
@@ -147,24 +216,19 @@ const quizApp = {
             block.style.height = `${val + 40}px`; 
             block.style.viewTransitionName = `block-${qId}-${val}`;
 
-            // Jika balok ini sedang dipilih, beri kelas 'selected' agar melayang
             if (this.selectedBlock && this.selectedBlock.qId === qId && this.selectedBlock.index === index) {
                 block.classList.add('selected');
             }
 
-            // Aksi saat balok diketuk di layar HP
             block.onclick = () => {
-                // Kondisi 1: Belum ada balok yang dipegang
                 if (!this.selectedBlock) {
                     this.selectedBlock = { qId: qId, index: index };
                     this.renderBlocks(q); 
                 } 
-                // Kondisi 2: Batal memilih balok yang sama
                 else if (this.selectedBlock.qId === qId && this.selectedBlock.index === index) {
                     this.selectedBlock = null;
                     this.renderBlocks(q);
                 } 
-                // Kondisi 3: Menukar/Menyisipkan dengan balok target
                 else if (this.selectedBlock.qId === qId) {
                     const firstIndex = this.selectedBlock.index;
                     const secondIndex = index;
@@ -182,8 +246,9 @@ const quizApp = {
                             const movedItem = currentArray.splice(firstIndex, 1)[0];
                             currentArray.splice(secondIndex, 0, movedItem);
                         }
-                        this.selectedBlock = null; // Lepaskan pegangan
+                        this.selectedBlock = null; 
                         this.renderBlocks(q);
+                        this.saveState(); // Auto-save after every block move
                     };
 
                     if (document.startViewTransition) {
@@ -200,15 +265,14 @@ const quizApp = {
     async submitQuiz() {
         if(!confirm("Apakah kamu yakin sudah selesai dan ingin mengumpulkan jawaban?")) return;
 
-        // Kumpulkan data ke dalam objek yang rapi (bukan teks panjang lagi)
         let answersPayload = {
             nama: this.studentName,
-            kelas: this.studentClass,
+            kelas: this.studentClass, 
             mulai: this.startTime.toLocaleTimeString('id-ID'),
             selesai: new Date().toLocaleTimeString('id-ID')
         };
 
-        let logOutput = `== HASIL UJIAN UTS ==\nSiswa: ${this.studentName}\n-----------------------\n`;
+        let logOutput = `== HASIL UJIAN UTS ==\nSiswa: ${this.studentName}\nKelas: ${this.studentClass}\nMulai: ${this.startTime.toLocaleTimeString('id-ID')}\nSelesai: ${new Date().toLocaleTimeString('id-ID')}\n-----------------------\n`;
 
         this.questions.forEach((q, index) => {
             let answer = "Belum dijawab";
@@ -222,9 +286,7 @@ const quizApp = {
                 answer = `[${game.solved ? "DITEMUKAN" : "MENYERAH"}] Target: ${game.target} | Tebakan: [${game.guesses.join(", ")}]`;
             }
             
-            // Simpan jawaban spesifik ke q1, q2, q3... untuk dikirim ke Spreadsheet
             answersPayload[`q${index + 1}`] = answer; 
-            
             logOutput += `Q${index + 1}: ${answer}\n`;
         });
 
@@ -232,32 +294,28 @@ const quizApp = {
         document.getElementById('screen-quiz').classList.remove('active');
         document.getElementById('screen-final').classList.add('active');
 
-        // ==========================================
-        // FITUR PENGIRIMAN KE GOOGLE SHEETS
-        // ==========================================
-        // GANTI tulisan di bawah dengan URL Web App dari Google Apps Script-mu!
-        const googleScriptURL = "https://script.google.com/macros/s/AKfycbwNFCL_E_lY752dEEpFxqKDnn3U62Ey8GRNp3LyCqk1QF0CZ8XX-L2JPPWuUqC9PLMt3g/exec"; 
+        // GANTI URL INI DENGAN URL GOOGLE APPS SCRIPT-MU!
+        const googleScriptURL = "https://script.google.com/macros/s/KODE_PANJANG_KAMU_DISINI/exec"; 
 
         try {
             await fetch(googleScriptURL, {
                 method: "POST",
-                // Menggunakan text/plain agar tidak diblokir oleh keamanan browser (CORS)
                 headers: { "Content-Type": "text/plain;charset=utf-8" }, 
                 body: JSON.stringify(answersPayload)
             });
             alert("Jawaban berhasil tersimpan ke sistem Bapak Guru! Silakan tutup halaman ini.");
+            
+            // Lock them out permanently now that the data is sent successfully
+            localStorage.removeItem('uts_state'); 
+            localStorage.setItem('uts_submitted', 'true');
+
         } catch (error) {
-            alert("Gagal mengirim otomatis karena koneksi. Silakan copy teks hasil dan kirim secara manual.");
+            alert("Gagal mengirim otomatis karena koneksi. Silakan copy teks hasil dan kirim secara manual ke Bapak Guru.");
         }
     }
 };
 
-// Cek kunci saat web baru dibuka
+// Fire the check when the page loads
 window.onload = () => {
-    if (localStorage.getItem('uts_coding_started') === 'true') {
-        document.getElementById('screen-login').innerHTML = `
-            <h1 style="color: var(--secondary);">⛔ Akses Ditolak</h1>
-            <p>Sistem mendeteksi bahwa kamu sudah menyelesaikan atau me-refresh ujian ini.</p>
-        `;
-    }
+    quizApp.checkSavedState();
 };
