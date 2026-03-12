@@ -295,7 +295,7 @@ const quizApp = {
         document.getElementById('screen-final').classList.add('active');
 
         // GANTI URL INI DENGAN URL GOOGLE APPS SCRIPT-MU!
-        const googleScriptURL = "https://script.google.com/macros/s/KODE_PANJANG_KAMU_DISINI/exec"; 
+        const googleScriptURL = "https://script.google.com/macros/s/AKfycbwNFCL_E_lY752dEEpFxqKDnn3U62Ey8GRNp3LyCqk1QF0CZ8XX-L2JPPWuUqC9PLMt3g/exec"; 
 
         try {
             await fetch(googleScriptURL, {
